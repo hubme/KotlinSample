@@ -1,0 +1,84 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+
+plugins {
+    alias(libs.plugins.android.application) apply false
+    alias(libs.plugins.kotlin.android) apply false
+    alias(libs.plugins.kotlin.parcelize) apply false
+}
+
+configurations {
+    // create("xuimanagerLib")
+    // create("xpframeworkLib")
+
+    myCustomConfig
+}
+
+dependencies {
+    myCustomConfig 'com.google.android.material:material:1.2.0'
+}
+
+task printClasspath {
+    doLast {
+        println "Classpath for myCustomConfig: ${configurations.myCustomConfig.files.asPath}"
+    }
+}
+
+task resolveMyConfig {
+    dependsOn printClasspath
+    doLast {
+        configurations.myCustomConfig.resolve()
+    }
+}
+
+
+allprojects {
+    repositories {
+        maven {
+            url 'https://maven.aliyun.com/repository/google/'
+        }
+        maven {
+            url 'https://maven.aliyun.com/repository/public/'
+        }
+        maven {
+            allowInsecureProtocol = true
+            url RELEASE_REPO_URL
+        }
+        maven {
+            allowInsecureProtocol = true
+            url SNAPSHOT_REPO_URL
+        }
+        google()
+        jcenter()
+
+    }
+
+    /*gradle.projectsEvaluated {
+        dependencies {
+            "xuimanagerLib"("com.xiaopeng.jar:xuimanager:2.0.0-SNAPSHOT")
+        }
+
+        ext {
+            xuimanagerPath = configurations.named("xuimanagerLib").asPath
+            // xpframeworkPath = configurations.xpframeworkLib.asPath
+        }
+
+        tasks.withType(JavaCompile) {
+            // options.compilerArgs.add("-Xbootclasspath/p:$xuimanagerPath")
+            // options.compilerArgs.add("-Xbootclasspath/p:$xpframeworkPath")
+            Set<File> fileSet = options.bootstrapClasspath.getFiles()
+            List<File> newFileList = new ArrayList<>()
+            println("xuiconfig xuimanagerPath: $xuimanagerPath task: $it")
+            // println("xuiconfig xpframeworkPath: $xpframeworkPath task: $it")
+            newFileList.add(new File(xuimanagerPath))
+            // newFileList.add(new File(xpframeworkPath))
+            newFileList.addAll(fileSet)
+            options.bootstrapClasspath = files(
+                    newFileList.toArray()
+            )
+        }
+    }*/
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
