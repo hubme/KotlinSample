@@ -1,0 +1,92 @@
+build.gradle
+  h_4655ebd087e915 1-84
+.gitignore
+  h_4655ebd087e915 1-10
+app/.gitignore
+  h_4655ebd087e915 1
+app/build.gradle.kts
+  h_4655ebd087e915 1-73
+app/proguard-rules.pro
+  h_4655ebd087e915 1-23
+app/src/androidTest/java/com/example/sample/ExampleInstrumentedTest.kt
+  h_4655ebd087e915 1-339
+app/src/main/AndroidManifest.xml
+  h_4655ebd087e915 1-30
+app/src/main/java/com/example/sample/FirstFragment.kt
+  h_4655ebd087e915 1-44
+app/src/main/java/com/example/sample/Main.java
+  h_4655ebd087e915 1-8
+app/src/main/java/com/example/sample/MainActivity.kt
+  h_4655ebd087e915 1-75
+app/src/main/java/com/example/sample/MyData.kt
+  h_4655ebd087e915 1-9
+app/src/main/java/com/example/sample/MyParcelize.kt
+  h_4655ebd087e915 1-10
+app/src/main/java/com/example/sample/SecondFragment.kt
+  h_4655ebd087e915 1-44
+app/src/main/res/drawable/ic_launcher_background.xml
+  h_4655ebd087e915 1-170
+app/src/main/res/drawable/ic_launcher_foreground.xml
+  h_4655ebd087e915 1-30
+app/src/main/res/layout/activity_main.xml
+  h_4655ebd087e915 1-33
+app/src/main/res/layout/content_main.xml
+  h_4655ebd087e915 1-19
+app/src/main/res/layout/fragment_first.xml
+  h_4655ebd087e915 1-35
+app/src/main/res/layout/fragment_second.xml
+  h_4655ebd087e915 1-35
+app/src/main/res/mipmap-anydpi/ic_launcher.xml
+  h_4655ebd087e915 1-6
+app/src/main/res/mipmap-anydpi/ic_launcher_round.xml
+  h_4655ebd087e915 1-6
+app/src/main/res/navigation/nav_graph.xml
+  h_4655ebd087e915 1-28
+app/src/main/res/values-land/dimens.xml
+  h_4655ebd087e915 1-3
+app/src/main/res/values-night/themes.xml
+  h_4655ebd087e915 1-21
+app/src/main/res/values-v23/themes.xml
+  h_4655ebd087e915 1-9
+app/src/main/res/values-w1240dp/dimens.xml
+  h_4655ebd087e915 1-3
+app/src/main/res/values-w600dp/dimens.xml
+  h_4655ebd087e915 1-3
+app/src/main/res/values/colors.xml
+  h_4655ebd087e915 1-10
+app/src/main/res/values/dimens.xml
+  h_4655ebd087e915 1-3
+app/src/main/res/values/strings.xml
+  h_4655ebd087e915 1-39
+app/src/main/res/values/themes.xml
+  h_4655ebd087e915 1-21
+app/src/main/res/xml/backup_rules.xml
+  h_4655ebd087e915 1-13
+app/src/main/res/xml/data_extraction_rules.xml
+  h_4655ebd087e915 1-19
+app/src/test/java/com/example/sample/ExampleUnitTest.kt
+  h_4655ebd087e915 1-17
+gradle.properties
+  h_4655ebd087e915 1-28
+gradle/libs.versions.toml
+  h_4655ebd087e915 1-33
+gradle/wrapper/gradle-wrapper.properties
+  h_4655ebd087e915 1-6
+gradlew
+  h_4655ebd087e915 1-185
+gradlew.bat
+  h_4655ebd087e915 1-89
+settings.gradle
+  h_4655ebd087e915 1-12
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "53491e97c3a3836575f15540a770aaf29f98ea06",
+  "prompts": {},
+  "humans": {
+    "h_4655ebd087e915": {
+      "author": "huogx <huogx@xiaopeng.com>"
+    }
+  }
+}
