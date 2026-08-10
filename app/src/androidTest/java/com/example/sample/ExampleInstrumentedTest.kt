@@ -2,8 +2,11 @@ package com.example.sample
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.catch
@@ -19,7 +22,9 @@ import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.retryWhen
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.zip
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -336,4 +341,28 @@ class ExampleInstrumentedTest {
             .collect { println(it) }
     }
 
+    @Test
+    fun shareInTest(): Unit = runBlocking {
+        val shareInFlow = flow {
+            emit(1)
+            delay(300L)
+            emit(2)
+            delay(300L)
+            emit(3)
+        }.shareIn(CoroutineScope(coroutineContext), SharingStarted.WhileSubscribed(5000L), 1)
+
+        launch {
+            shareInFlow.collect {
+                println("订阅者1 shareInFlow data $it")
+            }
+        }
+        delay(1000L)
+        launch {
+            shareInFlow.collect {
+                println("订阅者2 shareInFlow data $it")
+            }
+        }
+        delay(1000L) // 等待订阅者2 收到回放数据
+        cancel()
+    }
 }
