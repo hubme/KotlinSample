@@ -54,6 +54,8 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.androidx.lifecycle.livedata)
+    implementation(libs.androidx.lifecycle.livedata.ktx)
 
     // implementation(libs.aicabin.homespace)
 }
