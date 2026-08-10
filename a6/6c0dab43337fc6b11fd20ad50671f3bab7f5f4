@@ -1,0 +1,14 @@
+app/src/androidTest/java/com/example/sample/ExampleInstrumentedTest.kt
+  h_4655ebd087e915 5,7,9,25,27,344-367
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "a66c0dab43337fc6b11fd20ad50671f3bab7f5f4",
+  "prompts": {},
+  "humans": {
+    "h_4655ebd087e915": {
+      "author": "huogx <huogx@xiaopeng.com>"
+    }
+  }
+}
