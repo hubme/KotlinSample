@@ -8,5 +8,5 @@ pluginManagement {
     }
 }
 
-rootProject.name = "Sample"
+rootProject.name = "KotlinSample"
 include ':app'
