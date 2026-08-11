@@ -1,0 +1,14 @@
+app/src/test/java/com/example/sample/ExceptionTest.kt
+  h_bd4e2f711d58e6 1-85
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "f2e1e8b85e4f07bb21b5cefcd3bc38cc7ba81009",
+  "prompts": {},
+  "humans": {
+    "h_bd4e2f711d58e6": {
+      "author": "Vance <huogxu@gmail.com>"
+    }
+  }
+}
