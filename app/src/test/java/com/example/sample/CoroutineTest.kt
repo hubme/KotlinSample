@@ -1,8 +1,11 @@
 package com.example.sample
 
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
@@ -58,6 +61,23 @@ class CoroutineTest {
         val resultList = listOf(deferred1.await(), deferred2.await())
         println("Result list: $resultList after ${elapsedMillis(startTime)}ms")
 
+    }
+
+    @Test
+    fun asyncTest2() = runBlocking {
+        val exceptionHandler = CoroutineExceptionHandler { _, exception ->
+            println("Caught $exception in CoroutineExceptionHandler")
+        }
+
+        CoroutineScope(Job() + exceptionHandler).async {
+            val deferred = async {
+                delay(200)
+                // 异常被封装在 Deferred 中，直到 await() 才抛出
+                throw RuntimeException()
+            }
+        }
+
+        Thread.sleep(1000)
     }
 
     suspend fun networkCall(number: Int): String {

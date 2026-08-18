@@ -3,9 +3,11 @@ package com.example.sample
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.supervisorScope
 import org.junit.Test
 
 class ExceptionTest {
@@ -81,5 +83,54 @@ class ExceptionTest {
             }
         }.join()
 
+    }
+
+    @Test
+    fun coroutineScopeException() = runBlocking {
+        try {
+            doSomeThingSuspend()
+        } catch (e: Exception) {
+            // 可以捕获异常
+            println("Caught $e")
+        }
+    }
+
+    private suspend fun doSomeThingSuspend() {
+        // coroutineScope 是一个挂起函数，它会等待内部所有协程完成，并把子协程的异常重新抛给调用方。
+        coroutineScope {
+            launch {
+                throw RuntimeException()
+            }
+        }
+    }
+
+    /*
+    supervisorScope 不会把子协程异常重新抛给调用方，try-catch 捕获不到，异常由父级的 CoroutineExceptionHandler 处理。
+
+    output:
+    CEH: com.example.sample.ExceptionTest$main$$inlined$CoroutineExceptionHandler$1@7eb6b409
+    Caught java.lang.RuntimeException in CoroutineExceptionHandler
+     */
+    @Test
+    fun main() {
+        val handler = CoroutineExceptionHandler { _, throwable ->
+            println("Caught $throwable in CoroutineExceptionHandler")
+        }
+
+        CoroutineScope(Job() + handler).launch {
+            try {
+                supervisorScope {
+                    launch {
+                        // 非 null，说明 CoroutineExceptionHandler 是一个 context 元素，会被子协程继承
+                        println("CEH: ${coroutineContext[CoroutineExceptionHandler]}")
+                        throw RuntimeException()
+                    }
+                }
+            } catch (e: Exception) {
+                println("Caught $e")
+            }
+        }
+
+        Thread.sleep(100)
     }
 }
