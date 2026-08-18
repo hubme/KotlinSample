@@ -121,4 +121,47 @@ class CoroutineTest {
         globalCoroutineJob.cancel()
         delay(1000)
     }
+
+    @Test
+    fun sequenceTest() = runBlocking {
+        println("numbers: ")
+        val numbers = generateSequence(1) { it + 1 }
+        numbers.take(10).forEach {
+            print("$it ")
+        }
+
+        val pairs = generateSequence(Pair(0, 1)) { Pair(it.second, it.first + it.second) }
+            .map { it.first }
+
+        println()
+        println("pairs: ")
+        pairs.take(10).forEach {
+            print("$it ")
+        }
+
+        println()
+        println("custom: ")
+        val custom = sequence {
+            yield(1)
+            yieldAll(listOf(2, 3, 4))
+            yield(5)
+        }
+        custom.forEach {
+            print("$it ")
+        }
+        println()
+
+        // Sequence:逐元素处理,按需求值,找到结果立即停止
+        val result = sequenceOf(1, 2, 3, 4, 5)
+            .map {
+                println("map $it");
+                it * 2
+            }
+            .filter {
+                println("filter $it");
+                it > 4
+            }
+            .first()
+        println("result: $result")
+    }
 }
