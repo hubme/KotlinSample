@@ -1,5 +1,6 @@
 package com.example.sample
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -8,12 +9,17 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.cancellable
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.junit.Test
+import kotlin.coroutines.EmptyCoroutineContext
 
 class CoroutineTest {
 
@@ -163,5 +169,32 @@ class CoroutineTest {
             }
             .first()
         println("result: $result")
+    }
+
+    @Test
+    fun cancellableTest() = runBlocking {
+        CoroutineScope(EmptyCoroutineContext).launch {
+            flowOf(1, 2, 3)
+                // 没有 cancellable()：flowOf 不检查取消状态，3 依然会被发射并收集到，输出会多一行 Collected 3（协程要到之后的挂起点才真正结束）。
+                .cancellable()
+                .onCompletion { throwable ->
+                    if (throwable is CancellationException) {
+                        println("Flow got cancelled.")
+                    }
+                }
+                .collect {
+                    println("Collected $it")
+                    if (it == 2) {
+                        cancel()
+                    }
+                }
+        }.join()
+
+        /*
+        output:
+        Collected 1
+        Collected 2
+        Flow got cancelled.
+         */
     }
 }
