@@ -11,8 +11,13 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.cancellable
+import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -20,6 +25,8 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.junit.Test
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.system.measureTimeMillis
+import kotlin.time.Duration.Companion.seconds
 
 class CoroutineTest {
 
@@ -197,4 +204,136 @@ class CoroutineTest {
         Flow got cancelled.
          */
     }
+
+    @Test
+    fun mapLatestTest() = runBlocking {
+        flow {
+            repeat(5) {
+                val pancakeIndex = it + 1
+                println("Emitter:    Start Cooking Pancake $pancakeIndex")
+                delay(100)
+                println("Emitter:    Pancake $pancakeIndex ready!")
+                emit(pancakeIndex)
+            }
+        }.mapLatest {
+            println("Add topping onto the pancake $it")
+            delay(200)
+            it
+        }.collect {
+            println("Collector:  Start eating pancake $it")
+            delay(300)
+            println("Collector:  Finished eating pancake $it")
+        }
+    }
+
+    @Test
+    fun conflateTest() = runBlocking {
+        flow {
+            repeat(5) {
+                println("Emitter:    Start Cooking Pancake $it")
+                delay(1.seconds)
+                println("Emitter:    Pancake $it ready!")
+                emit(it)
+            }
+        }.conflate()
+            .collect {
+                println("Collector:  Start eating pancake $it")
+                delay(3.seconds)
+                println("Collector:  Finished eating pancake $it")
+            }
+    }
+
+    @Test
+    fun sharedFlowTest(): Unit = runBlocking {
+        // 缓冲区解耦发射者与慢订阅者：extraBufferCapacity 相当于冷流的 buffer() 操作符在热流上的等价物。
+        val flow = MutableSharedFlow<Int>(extraBufferCapacity = 10)
+
+        // Collector 1
+        launch {
+            flow.collect {
+                println("Collector 1 processes $it")
+            }
+        }
+
+        // Collector 2
+        launch {
+            flow.collect {
+                println("Collector 2 processes $it")
+                delay(100)
+            }
+        }
+
+        // Emitter
+        launch {
+            val timeToEmit = measureTimeMillis {
+                repeat(5) {
+                    flow.emit(it)
+                    delay(10)
+                }
+            }
+            println("Time to emit all values: $timeToEmit ms")
+        }
+
+        /*
+        注意：SharedFlow 永不完结，两个 collect 永远挂起等新值，所以该程序会一直运行（需手动停止）。
+        outpout:
+        Collector 1 processes 0
+        Collector 2 processes 0
+        Collector 1 processes 1
+        Collector 1 processes 2
+        Collector 1 processes 3
+        Collector 1 processes 4
+        Time to emit all values: 77 ms
+        Collector 2 processes 1
+        Collector 2 processes 2
+        Collector 2 processes 3
+        Collector 2 processes 4
+         */
+    }
+
+    @Test
+    fun stateFlowTest(): Unit = runBlocking {
+
+        val flow = MutableStateFlow(0)
+
+        // Collector 1
+        launch {
+            flow.collect {
+                println("Collector 1 processes $it")
+            }
+        }
+
+        // Collector 2
+        launch {
+            flow.collect {
+                println("Collector 2 processes $it")
+                delay(100)
+            }
+        }
+
+        // Emitter
+        launch {
+            val timeToEmit = measureTimeMillis {
+                repeat(5) {
+                    flow.emit(it)
+                    delay(10)
+                }
+            }
+            println("Time to emit all values: $timeToEmit ms")
+        }
+
+        /*
+        注意：StateFlow 永不完结，两个 collect 永久挂起，程序会一直运行。
+        output:
+        Collector 1 processes 0
+        Collector 2 processes 0
+        Collector 1 processes 1
+        Collector 1 processes 2
+        Collector 1 processes 3
+        Collector 1 processes 4
+        Time to emit all values: 83 ms
+        Collector 2 processes 4
+         */
+    }
+
 }
