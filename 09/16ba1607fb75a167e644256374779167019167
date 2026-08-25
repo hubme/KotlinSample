@@ -1,0 +1,15 @@
+app/src/test/java/com/example/sample/CoroutineTest.kt
+  h_bd4e2f711d58e6 14-15,17-18,20,28-29,207-291,293-338
+  h_bd4e2f711d58e6 292
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "0916ba1607fb75a167e644256374779167019167",
+  "prompts": {},
+  "humans": {
+    "h_bd4e2f711d58e6": {
+      "author": "Vance <huogxu@gmail.com>"
+    }
+  }
+}
