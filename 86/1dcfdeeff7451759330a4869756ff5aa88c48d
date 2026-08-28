@@ -1,0 +1,20 @@
+app/src/test/java/com/example/sample/CoroutineTest.kt
+  h_bd4e2f711d58e6 17,21-22,25-26,28,33,39-46,57,249,350-428,430-448
+  h_bd4e2f711d58e6 162,183-189,198,202,248,429
+app/src/test/java/com/example/sample/ExceptionTest.kt
+  h_bd4e2f711d58e6 8,137-162
+  h_bd4e2f711d58e6 163
+app/src/test/java/com/example/sample/LogUtils.kt
+  h_bd4e2f711d58e6 1-37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "861dcfdeeff7451759330a4869756ff5aa88c48d",
+  "prompts": {},
+  "humans": {
+    "h_bd4e2f711d58e6": {
+      "author": "Vance <huogxu@gmail.com>"
+    }
+  }
+}
