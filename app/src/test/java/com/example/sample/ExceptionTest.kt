@@ -5,6 +5,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.supervisorScope
@@ -132,5 +133,32 @@ class ExceptionTest {
         }
 
         Thread.sleep(100)
+    }
+
+    /*
+    违反"异常透明性"（Exception Transparency），禁用。
+
+    冷流的 emit → collect 是同一调用栈上的嵌套函数调用:
+    collect 启动 flow 块
+       ↓
+    flow 块执行 emit(1)
+       ↓  emit 内部会直接调用下游的 collect lambda
+    collect { throw Exception("Exception in collect{}") }  ← 异常在这里抛出
+       ↓  异常沿调用栈向上抛，穿过 emit(1) 的调用点
+    被 flow 块内的 try...catch 捕获 ✅
+
+    总结：emit 会同步执行下游的 collect lambda，因此 collect 中的异常从 emit 调用处抛出、被 builder 内的 try...catch 捕获——这正是不应在 flow builder 内部随意 try...catch emit 的原因。
+     */
+    @Test
+    fun tryCatchTest3() = runBlocking {
+        flow {
+            try {
+                emit(1)
+            } catch (_: Exception) {
+                println("Catch exception in flow builder.")
+            }
+        }.collect { _ ->
+            throw Exception("Exception in collect{}")
+        }
     }
 }

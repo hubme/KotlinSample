@@ -14,21 +14,36 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.cancellable
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.fold
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.junit.Test
+import java.io.IOException
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.system.measureTimeMillis
 import kotlin.time.Duration.Companion.seconds
 
 class CoroutineTest {
+    @Test
+    fun flowTest() = runBlocking {
+        val result = flowOf(1, 3, 10)
+            .fold(100){
+                accumulator, element -> 110
+            }
+        println("result: $result")
+    }
 
     @Test
     fun builderTest() = runBlocking {
@@ -39,6 +54,7 @@ class CoroutineTest {
         delay(200)
         job.start()
         println("end of runBlocking")
+
         /*
         父协程会等待所有子协程完成后，自身才算完成。
         output:
@@ -143,8 +159,7 @@ class CoroutineTest {
             print("$it ")
         }
 
-        val pairs = generateSequence(Pair(0, 1)) { Pair(it.second, it.first + it.second) }
-            .map { it.first }
+        val pairs = generateSequence(Pair(0, 1)) { Pair(it.second, it.first + it.second) }.map { it.first }
 
         println()
         println("pairs: ")
@@ -165,16 +180,13 @@ class CoroutineTest {
         println()
 
         // Sequence:逐元素处理,按需求值,找到结果立即停止
-        val result = sequenceOf(1, 2, 3, 4, 5)
-            .map {
-                println("map $it");
-                it * 2
-            }
-            .filter {
-                println("filter $it");
-                it > 4
-            }
-            .first()
+        val result = sequenceOf(1, 2, 3, 4, 5).map {
+            println("map $it");
+            it * 2
+        }.filter {
+            println("filter $it");
+            it > 4
+        }.first()
         println("result: $result")
     }
 
@@ -183,13 +195,11 @@ class CoroutineTest {
         CoroutineScope(EmptyCoroutineContext).launch {
             flowOf(1, 2, 3)
                 // 没有 cancellable()：flowOf 不检查取消状态，3 依然会被发射并收集到，输出会多一行 Collected 3（协程要到之后的挂起点才真正结束）。
-                .cancellable()
-                .onCompletion { throwable ->
+                .cancellable().onCompletion { throwable ->
                     if (throwable is CancellationException) {
                         println("Flow got cancelled.")
                     }
-                }
-                .collect {
+                }.collect {
                     println("Collected $it")
                     if (it == 2) {
                         cancel()
@@ -235,7 +245,8 @@ class CoroutineTest {
                 println("Emitter:    Pancake $it ready!")
                 emit(it)
             }
-        }.conflate()
+        }
+            .conflate()
             .collect {
                 println("Collector:  Start eating pancake $it")
                 delay(3.seconds)
@@ -334,6 +345,105 @@ class CoroutineTest {
         Time to emit all values: 83 ms
         Collector 2 processes 4
          */
+    }
+
+    @Test
+    fun launchInTest(): Unit = runBlocking {
+        flow {
+            emit("Apple")
+            emit("Microsoft")
+
+            throw Exception("Network Request Failed!")
+        }.onCompletion { cause ->
+            if (cause == null) {
+                println("Flow completed successfully!")
+            } else {
+                println("Flow completed exceptionally with $cause")
+            }
+        }.onEach {
+            throw Exception("Exception in collect{}")
+        }.catch { throwable ->
+            println("Handle exception in catch() operator $throwable")
+        }.launchIn(this)
+    }
+
+    @Test
+    fun main()  = runBlocking {
+        val flow = flow {
+            delay(100)
+
+            printInfo("Emitting first value")
+            emit(1)
+
+            delay(100)
+
+            printInfo("Emitting second value")
+            emit(2)
+        }
+
+        val scope = CoroutineScope(EmptyCoroutineContext)
+
+        // launchIn 不挂起、立即返回（返回 Job），它把收集扔进作用域里的新协程。两条 launchIn 链是并发运行的两次独立收集，几乎同时开始。
+        flow
+            .onEach { printInfo("Received $it with launchIn() - 1") }
+            .launchIn(scope)
+
+        flow
+            .onEach { printInfo("Received $it with launchIn() - 2") }
+            .launchIn(scope)
+
+        scope.launch {
+            flow.collect {
+                printInfo("Received $it in collect - 1")
+            }
+            flow.collect {
+                printInfo("Receive $it in collect - 2")
+            }
+        }
+
+        Thread.sleep(1000)
+    }
+
+    @Test
+    fun retryWhenTest() = runBlocking {
+        flow {
+            repeat(3) { index ->
+
+                delay(1000) // Network call
+
+                if (index < 2) {
+                    emit("New Stock data")
+                } else {
+                    throw IOException("Network Request Failed!")
+                }
+            }
+        }
+            .retryWhen { cause, attempt ->
+                println("Enter retry() with $cause and attempt is $attempt")
+                delay(1000 * (attempt + 1))
+                cause is IOException && attempt < 3
+            }
+            .catch { throwable ->
+                println("Handle exception in catch() operator $throwable")
+            }.collect { stockData ->
+                println("Collected $stockData")
+            }
+    }
+
+    @Test
+    fun joinAllTest() = runBlocking {
+        printInfo("main starts")
+        joinAll(
+            async { coroutine(1, 500) },
+            async { coroutine(2, 300) }
+        )
+        printInfo("main ends")
+    }
+
+    suspend fun coroutine(number: Int, delay: Long) {
+        printInfo("Coroutine $number starts work")
+        delay(delay)
+        printInfo("Coroutine $number has finished")
     }
 
 }
