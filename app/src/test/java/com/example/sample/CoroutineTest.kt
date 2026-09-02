@@ -33,6 +33,7 @@ import org.junit.Test
 import java.io.IOException
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.system.measureTimeMillis
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 class CoroutineTest {
@@ -444,6 +445,25 @@ class CoroutineTest {
         printInfo("Coroutine $number starts work")
         delay(delay)
         printInfo("Coroutine $number has finished")
+    }
+
+    @Test
+    fun invokeOnCompletionTest() = runBlocking {
+        val job = launch {
+            delay(1.seconds)
+            printInfo("Hello")
+        }
+
+        // 给 Job 注册一个完成回调，当这个 Job 进入最终状态（Completed 或 Cancelled）时被同步调用恰好一次。
+        // 它是普通函数（非挂起），可以在协程外的任何地方调用——这是它和 join() 的一个重要区别。
+        job.invokeOnCompletion {
+            printInfo("invokeOnCompletion. cause: $it")
+        }
+
+        delay(5.milliseconds)
+        job.cancel("取消")
+
+        job.join()
     }
 
 }
