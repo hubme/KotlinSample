@@ -1,34 +1,7 @@
 package com.example.sample
 
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.async
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.cancellable
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.conflate
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.fold
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.mapLatest
-import kotlinx.coroutines.flow.onCompletion
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.retryWhen
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.joinAll
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import org.junit.Test
 import java.io.IOException
 import kotlin.coroutines.EmptyCoroutineContext
@@ -466,4 +439,43 @@ class CoroutineTest {
         job.join()
     }
 
+    @Test
+    fun parentAndChildJobCancel() = runBlocking{
+
+        val scope = CoroutineScope(Dispatchers.Default)
+
+        //scope 会自动生成一个父 Job，通过 scope.coroutineContext[Job]!! 取到它。
+        scope.coroutineContext[Job]!!.invokeOnCompletion { throwable ->
+            if (throwable is CancellationException) {
+                println("Parent job was cancelled")
+            }
+        }
+
+        val childJob1 = scope.launch {
+            delay(1000)
+            println("Coroutine 1 completed")
+        }
+        childJob1.invokeOnCompletion { throwable ->
+            if (throwable is CancellationException) {
+                println("Coroutine 1 was cancelled!")
+            }
+        }
+
+        scope.launch {
+            delay(1000)
+            println("Coroutine 2 completed")
+        }.invokeOnCompletion { throwable ->
+            if (throwable is CancellationException) {
+                println("Coroutine 2 was cancelled!")
+            }
+        }
+
+        delay(200)
+
+        //Coroutine 2 和父 Job 不受影响，继续各自的 delay
+        childJob1.cancelAndJoin()
+
+        //结构化并发：取消父 Job → 传递给全部子 Job；反之取消子 Job 不影响父和其他兄弟。
+        // scope.coroutineContext[Job]!!.cancelAndJoin()
+    }
 }
