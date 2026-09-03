@@ -478,4 +478,42 @@ class CoroutineTest {
         //结构化并发：取消父 Job → 传递给全部子 Job；反之取消子 Job 不影响父和其他兄弟。
         // scope.coroutineContext[Job]!!.cancelAndJoin()
     }
+
+    /*
+    两条传播规则合起来记：
+    1. 取消（cancel）：只向下传播（父 → 子）；
+    2. 失败（异常）：默认向上传播并连坐全家；SupervisorJob 把它降级为"只影响自己"。
+     */
+    @Test
+    fun parentAndChildJobCancel2() = runBlocking{
+
+        val exceptionHandler = CoroutineExceptionHandler { context, exception ->
+            printInfo("Caught exception $exception")
+        }
+
+        //子协程失败默认会拖垮父 Job 和所有兄弟，而 SupervisorJob 可以阻断这种传播。
+        val scope = CoroutineScope(SupervisorJob() + exceptionHandler)
+
+        scope.launch {
+            printInfo("Coroutine 1 starts")
+            delay(50.milliseconds)
+            printInfo("Coroutine 1 fails")
+            throw RuntimeException()
+        }
+
+        scope.launch {
+            printInfo("Coroutine 2 starts")
+            delay(500.milliseconds)
+            printInfo("Coroutine 2 completed")
+        }.invokeOnCompletion { throwable ->
+            if (throwable is CancellationException) {
+                printInfo("Coroutine 2 got cancelled!")
+            }
+        }
+
+        Thread.sleep(1000)
+
+        println("Scope got cancelled: ${!scope.isActive}")
+
+    }
 }
